@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server"
 import { notFound } from "next/navigation"
 import { ProfileHeader, type Profile } from "@/components/dashboard/profile-header"
+import { GoalsSection, type Goal } from "@/components/dashboard/goals-section"
 
 interface PageProps {
     params: Promise<{ username: string }>
@@ -42,9 +43,24 @@ export default async function UserProfilePage({ params }: PageProps) {
         isFollowing = !!followRecord
     }
 
+    // Fetch goals with sub_goals for this profile
+    // For non-owners, only fetch public goals
+    const goalsQuery = supabase
+        .from('goals')
+        .select('*, sub_goals(*)')
+        .eq('user_id', profile.id)
+        .order('position', { ascending: true })
+        .order('created_at', { ascending: true })
+
+    if (!isOwner) {
+        goalsQuery.eq('is_public', true)
+    }
+
+    const { data: goals } = await goalsQuery as { data: Goal[] | null }
+
     return (
         <div className="min-h-screen pt-8 sm:pt-24">
-            <div className="mx-auto max-w-3xl space-y-6 px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-3xl space-y-8 px-4 sm:px-6 lg:px-8">
                 <ProfileHeader
                     profile={profile}
                     isOwner={isOwner}
@@ -52,10 +68,12 @@ export default async function UserProfilePage({ params }: PageProps) {
                     isLoggedIn={isLoggedIn}
                 />
 
-                {/* Goals Section - Placeholder */}
-
+                <GoalsSection
+                    goals={goals || []}
+                    userId={profile.id}
+                    isOwner={isOwner}
+                />
             </div>
         </div>
     )
 }
-

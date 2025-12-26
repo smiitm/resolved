@@ -35,39 +35,44 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    // Protected routes - redirect to landing page if not authenticated
-    const protectedPaths = ['/dashboard', '/onboarding']
-    const isProtectedPath = protectedPaths.some(path =>
-        request.nextUrl.pathname.startsWith(path)
-    )
-
-    if (!user && isProtectedPath) {
+    // Protected route - redirect to landing page if not authenticated
+    if (!user && request.nextUrl.pathname === '/onboarding') {
         const url = request.nextUrl.clone()
         url.pathname = '/'
         return NextResponse.redirect(url)
     }
 
-    // Redirect old users (with profile) away from onboarding to dashboard
+    // Redirect old users (with profile) away from onboarding to their profile
     if (user && request.nextUrl.pathname === '/onboarding') {
         const { data: profile } = await supabase
             .from('profiles')
-            .select('id')
+            .select('username')
             .eq('id', user.id)
             .single()
 
         if (profile) {
             const url = request.nextUrl.clone()
-            url.pathname = '/dashboard'
+            url.pathname = `/${profile.username}`
             return NextResponse.redirect(url)
         }
     }
 
-    // If user is logged in and tries to access landing page, redirect to dashboard
+    // If user is logged in and tries to access landing page, redirect to their profile
     if (user && request.nextUrl.pathname === '/') {
-        const url = request.nextUrl.clone()
-        url.pathname = '/dashboard'
-        return NextResponse.redirect(url)
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', user.id)
+            .single()
+
+        if (profile) {
+            const url = request.nextUrl.clone()
+            url.pathname = `/${profile.username}`
+            return NextResponse.redirect(url)
+        }
+        // If no profile, let them go to landing page (they'll need to onboard)
     }
 
     return supabaseResponse
 }
+

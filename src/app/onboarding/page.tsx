@@ -31,7 +31,9 @@ import {
     Link01Icon,
     ArrowRight01Icon,
     Loading03Icon,
+    TextIcon,
 } from '@hugeicons/core-free-icons'
+import { Textarea } from '@/components/ui/textarea'
 import { isReservedUsername } from '@/lib/constants'
 
 export default function OnboardingPage() {
@@ -43,7 +45,9 @@ export default function OnboardingPage() {
         username: '',
         full_name: '',
         profession: '',
-        location: ''
+        location: '',
+        bio: '',
+        social_link: ''
     })
 
     // Prefill data from Google Account
@@ -92,8 +96,10 @@ export default function OnboardingPage() {
                 id: user.id,
                 username: formData.username,
                 full_name: formData.full_name,
-                profession: formData.profession,
-                location: formData.location,
+                profession: formData.profession || null,
+                location: formData.location || null,
+                bio: formData.bio || null,
+                social_link: formData.social_link || null,
                 avatar_url: user.user_metadata.avatar_url,
             })
 
@@ -133,6 +139,7 @@ export default function OnboardingPage() {
                                     <InputGroupInput
                                         id="username"
                                         required
+                                        maxLength={20}
                                         value={formData.username}
                                         onChange={e => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
                                         placeholder="yourname"
@@ -153,6 +160,7 @@ export default function OnboardingPage() {
                                     <InputGroupInput
                                         id="fullname"
                                         required
+                                        maxLength={50}
                                         value={formData.full_name}
                                         onChange={e => setFormData({ ...formData, full_name: e.target.value })}
                                         placeholder="Your full name"
@@ -160,37 +168,71 @@ export default function OnboardingPage() {
                                 </InputGroup>
                             </Field>
 
-                            {/* Profession and Location - Two Column Grid */}
+                            {/* Optional Fields Section */}
+                            <div className="pt-2 border-t border-border/50">
+                                <p className="text-xs text-muted-foreground mb-3">Optional — you can always add these later</p>
+
+                                {/* Bio Field */}
+                                <Field>
+                                    <FieldLabel htmlFor="bio" className="text-muted-foreground">Bio</FieldLabel>
+                                    <Textarea
+                                        id="bio"
+                                        placeholder="Tell people about yourself..."
+                                        value={formData.bio}
+                                        onChange={e => setFormData({ ...formData, bio: e.target.value })}
+                                        rows={2}
+                                        maxLength={160}
+                                    />
+                                </Field>
+                            </div>
+
+                            {/* Profession, Location, Social Link - Grid */}
                             <div className="grid grid-cols-2 gap-4">
                                 <Field>
-                                    <FieldLabel htmlFor="profession">Profession</FieldLabel>
+                                    <FieldLabel htmlFor="profession" className="text-muted-foreground">Profession</FieldLabel>
                                     <InputGroup>
                                         <InputGroupAddon align="inline-start">
-                                            <HugeiconsIcon icon={BriefcaseIcon} strokeWidth={2} className="size-4 text-primary" />
+                                            <HugeiconsIcon icon={BriefcaseIcon} strokeWidth={2} className="size-4 text-muted-foreground" />
                                         </InputGroupAddon>
                                         <InputGroupInput
                                             id="profession"
-                                            placeholder="Designer"
+                                            placeholder="Developer"
                                             value={formData.profession}
                                             onChange={e => setFormData({ ...formData, profession: e.target.value })}
                                         />
                                     </InputGroup>
                                 </Field>
                                 <Field>
-                                    <FieldLabel htmlFor="location">Location</FieldLabel>
+                                    <FieldLabel htmlFor="location" className="text-muted-foreground">Location</FieldLabel>
                                     <InputGroup>
                                         <InputGroupAddon align="inline-start">
-                                            <HugeiconsIcon icon={Location01Icon} strokeWidth={2} className="size-4 text-primary" />
+                                            <HugeiconsIcon icon={Location01Icon} strokeWidth={2} className="size-4 text-muted-foreground" />
                                         </InputGroupAddon>
                                         <InputGroupInput
                                             id="location"
-                                            placeholder="NYC"
+                                            placeholder="Mumbai"
                                             value={formData.location}
                                             onChange={e => setFormData({ ...formData, location: e.target.value })}
                                         />
                                     </InputGroup>
                                 </Field>
                             </div>
+
+                            {/* Social Link Field */}
+                            <Field>
+                                <FieldLabel htmlFor="social_link" className="text-muted-foreground">Social Link</FieldLabel>
+                                <InputGroup>
+                                    <InputGroupAddon align="inline-start">
+                                        <HugeiconsIcon icon={Link01Icon} strokeWidth={2} className="size-4 text-muted-foreground" />
+                                    </InputGroupAddon>
+                                    <InputGroupInput
+                                        id="social_link"
+                                        placeholder="x.com/you"
+                                        value={formData.social_link}
+                                        onChange={e => setFormData({ ...formData, social_link: e.target.value })}
+                                    />
+                                </InputGroup>
+                            </Field>
                         </FieldGroup>
                     </form>
                 </CardContent>

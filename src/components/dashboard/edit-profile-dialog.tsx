@@ -52,7 +52,8 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
         full_name: profile.full_name || '',
         profession: profile.profession || '',
         location: profile.location || '',
-        bio: profile.bio || ''
+        bio: profile.bio || '',
+        social_link: profile.social_link || ''
     })
 
     // Reset form when dialog opens
@@ -63,7 +64,8 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
                 full_name: profile.full_name || '',
                 profession: profile.profession || '',
                 location: profile.location || '',
-                bio: profile.bio || ''
+                bio: profile.bio || '',
+                social_link: profile.social_link || ''
             })
         }
         setOpen(isOpen)
@@ -99,6 +101,7 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
                     profession: formData.profession || null,
                     location: formData.location || null,
                     bio: formData.bio || null,
+                    social_link: formData.social_link || null,
                 })
                 .eq('id', user.id)
 
@@ -147,6 +150,7 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
                                 <InputGroupInput
                                     id="edit-username"
                                     required
+                                    maxLength={20}
                                     value={formData.username}
                                     onChange={e => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
                                     placeholder="yourname"
@@ -167,6 +171,7 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
                                 <InputGroupInput
                                     id="edit-fullname"
                                     required
+                                    maxLength={50}
                                     value={formData.full_name}
                                     onChange={e => setFormData({ ...formData, full_name: e.target.value })}
                                     placeholder="Your full name"
@@ -215,9 +220,29 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
                                 value={formData.bio}
                                 onChange={e => setFormData({ ...formData, bio: e.target.value })}
                                 rows={3}
+                                maxLength={160}
                             />
                             <FieldDescription>
                                 Brief description for your profile.
+                            </FieldDescription>
+                        </Field>
+
+                        {/* Social Link Field */}
+                        <Field>
+                            <FieldLabel htmlFor="edit-social-link">Social Link</FieldLabel>
+                            <InputGroup>
+                                <InputGroupAddon align="inline-start">
+                                    <HugeiconsIcon icon={Link01Icon} strokeWidth={2} className="size-4 text-primary" />
+                                </InputGroupAddon>
+                                <InputGroupInput
+                                    id="edit-social-link"
+                                    placeholder="x.com/you"
+                                    value={formData.social_link}
+                                    onChange={e => setFormData({ ...formData, social_link: e.target.value })}
+                                />
+                            </InputGroup>
+                            <FieldDescription>
+                                Link to your social profile (Twitter, LinkedIn, etc.)
                             </FieldDescription>
                         </Field>
                     </FieldGroup>
