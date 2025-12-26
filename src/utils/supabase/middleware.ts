@@ -36,7 +36,7 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     // Protected routes - redirect to landing page if not authenticated
-    const protectedPaths = ['/home', '/dashboard']
+    const protectedPaths = ['/dashboard', '/onboarding']
     const isProtectedPath = protectedPaths.some(path =>
         request.nextUrl.pathname.startsWith(path)
     )
@@ -47,7 +47,22 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // If user is logged in and tries to access landing page, redirect to home
+    // Redirect old users (with profile) away from onboarding to dashboard
+    if (user && request.nextUrl.pathname === '/onboarding') {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', user.id)
+            .single()
+
+        if (profile) {
+            const url = request.nextUrl.clone()
+            url.pathname = '/dashboard'
+            return NextResponse.redirect(url)
+        }
+    }
+
+    // If user is logged in and tries to access landing page, redirect to dashboard
     if (user && request.nextUrl.pathname === '/') {
         const url = request.nextUrl.clone()
         url.pathname = '/dashboard'

@@ -1,34 +1,33 @@
 import { NextResponse } from 'next/server'
-// The client you created from the Server-Side Auth instructions
 import { createClient } from '@/utils/supabase/server'
 
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
     const code = searchParams.get('code')
-    // if "next" is in param, use it as the redirect URL
-    let next = searchParams.get('next') ?? '/dashboard'
-    if (!next.startsWith('/')) {
-        // if "next" is not a relative URL, use the default
-        next = '/dashboard'
-    }
-
+    
     if (code) {
         const supabase = await createClient()
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
-        if (!error) {
-            const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
-            const isLocalEnv = process.env.NODE_ENV === 'development'
-            if (isLocalEnv) {
-                // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-                return NextResponse.redirect(`${origin}${next}`)
-            } else if (forwardedHost) {
-                return NextResponse.redirect(`https://${forwardedHost}${next}`)
+        const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code)
+        
+        if (!error && session?.user) {
+            // 1. Check if the user has a profile in your database
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('username')
+                .eq('id', session.user.id)
+                .single()
+            
+            // 2. Decide where to send them
+            if (profile) {
+                // User exists -> Go to Dashboard
+                return NextResponse.redirect(`${origin}/dashboard`)
             } else {
-                return NextResponse.redirect(`${origin}${next}`)
+                // New user -> Go to Onboarding to pick a username
+                return NextResponse.redirect(`${origin}/onboarding`)
             }
         }
     }
 
-    // return the user to an error page with instructions
+    // Return the user to an error page with instructions if auth fails
     return NextResponse.redirect(`${origin}/auth/auth-code-error`)
 }
