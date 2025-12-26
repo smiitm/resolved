@@ -96,9 +96,9 @@ export function GoalsSection({ goals: initialGoals, userId, isOwner }: GoalsSect
         <div className="space-y-3 sm:space-y-4">
             {/* Section Header */}
             <div className="flex items-center justify-between gap-2">
-                <h2 className="text-base font-mono sm:text-lg text-foreground flex items-center gap-1.5 sm:gap-2">
-                    <HugeiconsIcon icon={Target01Icon} strokeWidth={2} className="size-4 sm:size-5" />
-                    GOALS FOR 2026
+                <h2 className="text-lg font-serif sm:text-xl text-foreground/90 flex items-center gap-1.5 sm:gap-2">
+                    {/* <HugeiconsIcon icon={Target01Icon} strokeWidth={2} className="size-4 sm:size-5" /> */}
+                    Goals For 2026
                 </h2>
                 {isOwner && canEdit && goals.length < MAX_GOALS && (
                     <AddGoalDialog

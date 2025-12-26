@@ -7,8 +7,8 @@ import {
     ArrowDown01Icon,
     ArrowUp01Icon,
     Delete02Icon,
-    CheckmarkCircle02Icon,
-    CircleIcon,
+    CheckmarkSquare01Icon,
+    SquareIcon,
     Add01Icon,
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
@@ -169,7 +169,7 @@ export function GoalCard({
                     className={`shrink-0 ${isOwner ? 'cursor-pointer' : 'cursor-default'}`}
                 >
                     <HugeiconsIcon
-                        icon={isGoalComplete ? CheckmarkCircle02Icon : CircleIcon}
+                        icon={isGoalComplete ? CheckmarkSquare01Icon : SquareIcon}
                         strokeWidth={2}
                         className={`size-5 sm:size-6 ${isGoalComplete ? 'text-primary' : 'text-muted-foreground'}`}
                     />
@@ -246,7 +246,7 @@ export function GoalCard({
                                         className={`shrink-0 ${isOwner ? 'cursor-pointer' : 'cursor-default'}`}
                                     >
                                         <HugeiconsIcon
-                                            icon={subGoal.is_completed ? CheckmarkCircle02Icon : CircleIcon}
+                                            icon={subGoal.is_completed ? CheckmarkSquare01Icon : SquareIcon}
                                             strokeWidth={2}
                                             className={`size-4 sm:size-5 ${subGoal.is_completed ? 'text-primary' : 'text-muted-foreground'}`}
                                         />
