@@ -32,6 +32,7 @@ import {
     ArrowRight01Icon,
     Loading03Icon,
 } from '@hugeicons/core-free-icons'
+import { isReservedUsername } from '@/lib/constants'
 
 export default function OnboardingPage() {
     const supabase = createClient()
@@ -68,6 +69,13 @@ export default function OnboardingPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) throw new Error('No authenticated user found')
 
+            // Check if username is reserved
+            if (isReservedUsername(formData.username)) {
+                alert('This username is reserved. Please choose a different one.')
+                setLoading(false)
+                return
+            }
+
             const { data: existing } = await supabase
                 .from('profiles')
                 .select('username')
@@ -91,7 +99,7 @@ export default function OnboardingPage() {
 
             if (error) throw error
 
-            router.push('/dashboard')
+            router.push(`/${formData.username}`)
             router.refresh()
 
         } catch (error) {

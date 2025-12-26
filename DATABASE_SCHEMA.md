@@ -1,18 +1,19 @@
-
 # Database Schema & Architecture: RESOLVED
 
-**Project:** Resolved (Minimalist Goal Tracker)  
-**Database:** Supabase (PostgreSQL)  
+**Project:** Resolved (Minimalist Goal Tracker)
+**Database:** Supabase (PostgreSQL)
 **Auth:** Supabase Auth (Google OAuth)
+**Version:** 1.1 (Updated with Social Features)
 
 ---
 
 ## 1. Overview
 
-The database uses a relational structure with three core tables: `profiles`, `goals`, and `sub_goals`.
-- **User Management:** Handled by Supabase Auth (`auth.users`), synced to `public.profiles`.
-- **Performance:** `num_goals` and `num_subgoals` are cached in the `profiles` table and updated automatically via Database Triggers to avoid expensive `COUNT(*)` queries on the frontend.
-- **Security:** Row Level Security (RLS) is enabled on all tables.
+The database uses a relational structure with four core tables.
+- **User Data:** `profiles` (Synced with Auth).
+- **Core Loop:** `goals` and `sub_goals`.
+- **Social Graph:** `follows` (Many-to-Many relationship).
+- **Performance:** Counts (`num_goals`, `num_subgoals`, `follower_count`) are cached in parent tables and updated via Triggers to ensure O(1) read performance.
 
 ---
 
@@ -24,14 +25,18 @@ Stores public user information. Linked 1:1 with `auth.users`.
 ```sql
 create table public.profiles (
   id uuid references auth.users not null primary key, -- Links to Supabase Auth
-  username text unique not null,                      -- For URL (resolved.app/username)
+  username text unique not null,                      -- URL: resolved.app/username
   full_name text,
   bio text,
   location text,
   profession text,
   avatar_url text,
   
-  -- Cached Counts (Managed by Triggers)
+  -- Social Fields (New)
+  social_link text,             -- External link (e.g. [twitter.com/user](https://twitter.com/user))
+  follower_count int default 0, -- Auto-updated via trigger
+  
+  -- Goal Stats (Auto-updated)
   num_goals int default 0, 
   num_subgoals int default 0,
   
@@ -71,59 +76,72 @@ create table public.sub_goals (
 
 ```
 
----
+### 2.4 Follows (`public.follows`)
 
-## 3. Automation (Triggers)
-
-We use PostgreSQL functions and triggers to automatically update the `num_goals` and `num_subgoals` columns in the `profiles` table whenever records are inserted or deleted.
-
-### 3.1 Goal Count Trigger
+Handles the social graph (User A follows User B).
 
 ```sql
--- Function
-create or replace function handle_goal_count()
-returns trigger as $$
-begin
-  if (TG_OP = 'INSERT') then
-    update public.profiles set num_goals = num_goals + 1 where id = new.user_id;
-  elsif (TG_OP = 'DELETE') then
-    update public.profiles set num_goals = num_goals - 1 where id = old.user_id;
-  end if;
-  return null;
-end;
-$$ language plpgsql security definer;
+create table public.follows (
+  follower_id uuid references public.profiles(id) on delete cascade not null,
+  following_id uuid references public.profiles(id) on delete cascade not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()),
+  
+  -- Composite Key prevents duplicate following
+  primary key (follower_id, following_id),
+  
+  -- Constraint prevents self-following
+  constraint no_self_follow check (follower_id != following_id)
+);
 
--- Trigger
+```
+
+---
+
+## 3. Automation (Database Triggers)
+
+We use PostgreSQL triggers to manage counts automatically. This removes the need for complex counting logic in the frontend.
+
+### 3.1 Goal & Sub-Goal Counts
+
+*Logic: When a Goal/Sub-goal is created or deleted, update the user's profile stats.*
+
+```sql
+-- Goal Count Trigger
 create trigger on_goal_change
   after insert or delete on public.goals
   for each row execute procedure handle_goal_count();
 
+-- Sub-Goal Count Trigger
+create trigger on_subgoal_change
+  after insert or delete on public.sub_goals
+  for each row execute procedure handle_subgoal_count();
+
 ```
 
-### 3.2 Sub-Goal Count Trigger
+### 3.2 Follower Count (Social)
+
+*Logic: When a row is added to `follows`, increment `follower_count` for the `following_id` user.*
 
 ```sql
--- Function
-create or replace function handle_subgoal_count()
+create or replace function handle_new_follow()
 returns trigger as $$
-declare
-  target_user_id uuid;
 begin
   if (TG_OP = 'INSERT') then
-    select user_id into target_user_id from public.goals where id = new.goal_id;
-    update public.profiles set num_subgoals = num_subgoals + 1 where id = target_user_id;
+    update public.profiles 
+    set follower_count = follower_count + 1 
+    where id = new.following_id;
   elsif (TG_OP = 'DELETE') then
-    select user_id into target_user_id from public.goals where id = old.goal_id;
-    update public.profiles set num_subgoals = num_subgoals - 1 where id = target_user_id;
+    update public.profiles 
+    set follower_count = follower_count - 1 
+    where id = old.following_id;
   end if;
   return null;
 end;
 $$ language plpgsql security definer;
 
--- Trigger
-create trigger on_subgoal_change
-  after insert or delete on public.sub_goals
-  for each row execute procedure handle_subgoal_count();
+create trigger on_follow_change
+  after insert or delete on public.follows
+  for each row execute procedure handle_new_follow();
 
 ```
 
@@ -131,30 +149,29 @@ create trigger on_subgoal_change
 
 ## 4. Security (RLS Policies)
 
-Row Level Security is ENABLED on all tables.
+Row Level Security is **ENABLED** on all tables.
 
 ### 4.1 Profiles
 
 * **Select:** Public (Everyone can view profiles).
-* **Insert:** Authenticated Users only (Must match their own `auth.uid`).
-* **Update:** Authenticated Users only (Must match their own `auth.uid`).
+* **Insert/Update:** Owner Only (`auth.uid() = id`).
 
 ```sql
 create policy "Public profiles are viewable by everyone." 
   on public.profiles for select using ( true );
-
-create policy "Users can insert their own profile." 
-  on public.profiles for insert with check ( auth.uid() = id );
 
 create policy "Users can update own profile." 
   on public.profiles for update using ( auth.uid() = id );
 
 ```
 
-### 4.2 Goals
+### 4.2 Goals & Sub-Goals
 
-* **Select:** Public (if `is_public = true`) OR Owner (if `auth.uid() = user_id`).
-* **Insert/Update/Delete:** Owner only.
+* **Select:** * If `is_public = true` -> Everyone.
+* If `is_public = false` -> Owner Only.
+
+
+* **Write:** Owner Only.
 
 ```sql
 create policy "Public goals are viewable by everyone." 
@@ -167,31 +184,21 @@ create policy "Users can manage own goals."
 
 ```
 
-### 4.3 Sub-Goals
+### 4.3 Follows
 
-* **Select:** Visible if the parent Goal is visible (Public or Owned).
-* **Insert/Update/Delete:** Owner only (Checked via Parent Goal ownership).
+* **Select:** Public (Friend lists are public).
+* **Insert (Follow):** Authenticated users can follow others.
+* **Delete (Unfollow):** Users can only delete records where they are the `follower`.
 
 ```sql
-create policy "Subgoals viewable if parent goal is visible"
-  on public.sub_goals for select
-  using ( 
-    exists (
-      select 1 from public.goals 
-      where goals.id = sub_goals.goal_id 
-      and (goals.is_public = true or goals.user_id = auth.uid())
-    ) 
-  );
+create policy "Public follows are viewable by everyone."
+  on public.follows for select using ( true );
 
-create policy "Users can manage subgoals for their own goals"
-  on public.sub_goals for all
-  using (
-    exists (
-      select 1 from public.goals
-      where goals.id = sub_goals.goal_id
-      and goals.user_id = auth.uid()
-    )
-  );
+create policy "Users can follow others."
+  on public.follows for insert with check ( auth.uid() = follower_id );
+
+create policy "Users can unfollow."
+  on public.follows for delete using ( auth.uid() = follower_id );
 
 ```
 

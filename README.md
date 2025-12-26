@@ -1,2 +1,2 @@
 ### Resolved
-Goal tracking and public accountablity via minimalistic UI
+Goal tracking and public accountability via minimalistic UI

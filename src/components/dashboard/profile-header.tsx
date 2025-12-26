@@ -6,7 +6,7 @@ import {
     BriefcaseIcon,
 } from "@hugeicons/core-free-icons"
 import { EditProfileDialog } from "./edit-profile-dialog"
-import { LogoutButton } from "@/components/auth/logout-button"
+import { FollowButton } from "./follow-button"
 
 interface Profile {
     id: string
@@ -20,9 +20,12 @@ interface Profile {
 
 interface ProfileHeaderProps {
     profile: Profile
+    isOwner?: boolean
+    isFollowing?: boolean
+    isLoggedIn?: boolean
 }
 
-export function ProfileHeader({ profile }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, isOwner = true, isFollowing = false, isLoggedIn = false }: ProfileHeaderProps) {
     return (
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-6">
@@ -70,8 +73,15 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 
                 {/* Action Buttons */}
                 <div className="flex flex-row sm:flex-col gap-2 shrink-0">
-                    <EditProfileDialog profile={profile} />
-                    <LogoutButton />
+                    {isOwner ? (
+                        <EditProfileDialog profile={profile} />
+                    ) : (
+                        <FollowButton
+                            targetUserId={profile.id}
+                            isFollowing={isFollowing}
+                            isLoggedIn={isLoggedIn}
+                        />
+                    )}
                 </div>
             </div>
 
@@ -86,3 +96,4 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 }
 
 export type { Profile }
+
