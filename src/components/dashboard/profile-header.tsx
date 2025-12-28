@@ -154,4 +154,3 @@ export function ProfileHeader({ profile, isOwner = true, isFollowing = false, is
 }
 
 export type { Profile }
-

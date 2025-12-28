@@ -50,19 +50,38 @@ export default function OnboardingPage() {
         social_link: ''
     })
 
-    // Prefill data from Google Account
+    // Prefill data from Google Account and check if user already has a profile
     useEffect(() => {
-        const getGoogleData = async () => {
+        const checkUserAndPrefill = async () => {
             const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
-                setFormData(prev => ({
-                    ...prev,
-                    full_name: user.user_metadata.full_name || '',
-                    username: user.user_metadata.full_name?.replace(/\s/g, '').toLowerCase().slice(0, 15) || ''
-                }))
+
+            if (!user) {
+                // No user logged in, redirect to home
+                router.push('/')
+                return
             }
+
+            // Check if user already has a profile
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('username')
+                .eq('id', user.id)
+                .single()
+
+            if (profile?.username) {
+                // User already has a profile, redirect to their page
+                router.push(`/${profile.username}`)
+                return
+            }
+
+            // User is logged in but has no profile, prefill the form
+            setFormData(prev => ({
+                ...prev,
+                full_name: user.user_metadata.full_name || '',
+                username: user.user_metadata.full_name?.replace(/\s/g, '').toLowerCase().slice(0, 15) || ''
+            }))
         }
-        getGoogleData()
+        checkUserAndPrefill()
     }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {

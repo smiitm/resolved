@@ -59,7 +59,7 @@ export default async function UserProfilePage({ params }: PageProps) {
     const { data: goals } = await goalsQuery as { data: Goal[] | null }
 
     return (
-        <div className="min-h-screen pt-8 sm:pt-24 bg-white dark:bg-linear-to-b from-neutral-900 to-black">
+        <div className="min-h-screen pt-8 sm:pt-24 bg-white dark:bg-neutral-950">
             <div className="mx-auto max-w-3xl space-y-8 px-4 sm:px-6 lg:px-8">
                 <ProfileHeader
                     profile={profile}

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { GoalCard } from './goal-card'
 import { AddGoalDialog } from './add-goal-dialog'
+import { ProgressSummary } from './progress-summary'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Target01Icon, LockIcon } from '@hugeicons/core-free-icons'
 import { canMakeStructuralChanges, getCurrentEditWindow, getNextEditWindow, getEditWindowInfo } from '@/lib/constants'
@@ -47,6 +48,10 @@ export function GoalsSection({ goals: initialGoals, userId, isOwner }: GoalsSect
 
     // Count total sub-goals across all goals
     const totalSubGoals = goals.reduce((acc, goal) => acc + goal.sub_goals.length, 0)
+
+    // Count completed goals and sub-goals
+    const completedGoals = goals.filter(g => g.is_completed || (g.sub_goals.length > 0 && g.sub_goals.every(sg => sg.is_completed))).length
+    const completedSubGoals = goals.reduce((acc, goal) => acc + goal.sub_goals.filter(sg => sg.is_completed).length, 0)
 
     const handleGoalAdded = (newGoal: Goal) => {
         setGoals(prev => [...prev, newGoal])
@@ -96,9 +101,9 @@ export function GoalsSection({ goals: initialGoals, userId, isOwner }: GoalsSect
         <div className="space-y-3 sm:space-y-4">
             {/* Section Header */}
             <div className="flex items-center justify-between gap-2">
-                <h2 className="text-lg font-serif sm:text-xl text-foreground/90 flex items-center gap-1.5 sm:gap-2">
+                <h2 className="text-base sm:text-lg text-foreground/70 flex items-center gap-1.5 sm:gap-2">
                     {/* <HugeiconsIcon icon={Target01Icon} strokeWidth={2} className="size-4 sm:size-5" /> */}
-                    Goals For 2026
+                    GOALS FOR 2026
                 </h2>
                 {isOwner && canEdit && goals.length < MAX_GOALS && (
                     <AddGoalDialog
@@ -107,6 +112,14 @@ export function GoalsSection({ goals: initialGoals, userId, isOwner }: GoalsSect
                     />
                 )}
             </div>
+
+            {/* Progress Summary */}
+            <ProgressSummary
+                totalGoals={goals.length}
+                completedGoals={completedGoals}
+                totalSubGoals={totalSubGoals}
+                completedSubGoals={completedSubGoals}
+            />
 
             {/* Edit Window Status Banner (for owners) */}
             {isOwner && (
@@ -149,21 +162,31 @@ export function GoalsSection({ goals: initialGoals, userId, isOwner }: GoalsSect
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-8 sm:py-12 text-muted-foreground">
-                    <HugeiconsIcon icon={Target01Icon} strokeWidth={1.5} className="size-10 sm:size-12 mx-auto mb-2 sm:mb-3 opacity-50" />
-                    <p className="text-xs sm:text-sm">
-                        {isOwner ? "You haven't set any goals yet." : "No goals to display."}
-                    </p>
-                    {isOwner && canEdit && (
-                        <p className="text-[11px] sm:text-xs mt-1 opacity-75">
-                            Click "Add Goal" to get started
+                <div className="relative overflow-hidden rounded-xl border border-border/50 bg-muted/30 text-center py-10 sm:py-14 px-6">
+                    <div className="relative z-10">
+                        <div className="inline-flex items-center justify-center size-14 sm:size-16 rounded-2xl bg-primary/10 dark:bg-primary/20 mb-4">
+                            <HugeiconsIcon icon={Target01Icon} strokeWidth={1.5} className="size-7 sm:size-8 text-primary" />
+                        </div>
+                        <h3 className="text-base sm:text-lg font-medium text-foreground mb-2">
+                            {isOwner ? "No goals yet" : "No goals to display"}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground max-w-xs mx-auto">
+                            {isOwner
+                                ? "Start defining your year. Set intentional goals that matter."
+                                : "This user hasn't made their goals public yet."
+                            }
                         </p>
-                    )}
-                    {isOwner && !canEdit && (
-                        <p className="text-[11px] sm:text-xs mt-1 opacity-75">
-                            Next edit window: {nextWindow.startDate}
-                        </p>
-                    )}
+                        {isOwner && canEdit && (
+                            <div className="mt-5">
+                                <AddGoalDialog userId={userId} onGoalAdded={handleGoalAdded} />
+                            </div>
+                        )}
+                        {isOwner && !canEdit && (
+                            <p className="text-[11px] sm:text-xs text-muted-foreground mt-4">
+                                Next edit window opens <span className="font-medium text-primary">{nextWindow.startDate}</span>
+                            </p>
+                        )}
+                    </div>
                 </div>
             )}
 

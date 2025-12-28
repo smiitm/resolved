@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import { createClient } from '@/utils/supabase/client'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
@@ -156,7 +157,13 @@ export function GoalCard({
     }
 
     return (
-        <div className={`rounded-lg sm:rounded-xl border overflow-hidden transition-colors ${isGoalComplete ? 'border-primary/30 bg-primary/5' : 'border-border/50 bg-card'}`}>
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            whileHover={{ boxShadow: isGoalComplete ? '0 0 20px rgba(124, 58, 237, 0.15)' : '0 0 20px rgba(124, 58, 237, 0.08)' }}
+            className={`rounded-lg sm:rounded-xl border overflow-hidden transition-colors ${isGoalComplete ? 'border-primary/30 bg-primary/5' : 'border-border/50 bg-card'}`}
+        >
             {/* Goal Header */}
             <div
                 className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 cursor-pointer hover:bg-muted/30 transition-colors"
@@ -229,78 +236,88 @@ export function GoalCard({
             </div>
 
             {/* Expanded Sub-Goals */}
-            {expanded && (
-                <div className="border-t border-border/50 bg-muted/20">
-                    {/* Sub-goals list */}
-                    {goal.sub_goals.length > 0 ? (
-                        <ul className="divide-y divide-border/30">
-                            {goal.sub_goals.map(subGoal => (
-                                <li
-                                    key={subGoal.id}
-                                    className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 group"
-                                >
-                                    {/* Checkbox */}
-                                    <button
-                                        onClick={() => isOwner && handleToggleSubGoal(subGoal)}
-                                        disabled={!isOwner}
-                                        className={`shrink-0 ${isOwner ? 'cursor-pointer' : 'cursor-default'}`}
-                                    >
-                                        <HugeiconsIcon
-                                            icon={subGoal.is_completed ? CheckmarkSquare01Icon : SquareIcon}
-                                            strokeWidth={2}
-                                            className={`size-4 sm:size-5 ${subGoal.is_completed ? 'text-primary' : 'text-muted-foreground'}`}
-                                        />
-                                    </button>
-
-                                    {/* Sub-goal title */}
-                                    <span className={`flex-1 text-xs sm:text-sm ${subGoal.is_completed ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-                                        {subGoal.title}
-                                    </span>
-
-                                    {/* Delete sub-goal (Owner only, during edit windows) */}
-                                    {isOwner && canEdit && (
-                                        <button
-                                            onClick={() => handleDeleteSubGoal(subGoal.id)}
-                                            className="shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+            <AnimatePresence>
+                {expanded && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                    >
+                        <div className="border-t border-border/50 bg-muted/20">
+                            {/* Sub-goals list */}
+                            {goal.sub_goals.length > 0 ? (
+                                <ul className="divide-y divide-border/30">
+                                    {goal.sub_goals.map(subGoal => (
+                                        <li
+                                            key={subGoal.id}
+                                            className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 group"
                                         >
-                                            <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} className="size-3.5 sm:size-4" />
-                                        </button>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p className="px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-muted-foreground">
-                            No sub-goals yet.
-                        </p>
-                    )}
+                                            {/* Checkbox */}
+                                            <button
+                                                onClick={() => isOwner && handleToggleSubGoal(subGoal)}
+                                                disabled={!isOwner}
+                                                className={`shrink-0 ${isOwner ? 'cursor-pointer' : 'cursor-default'}`}
+                                            >
+                                                <HugeiconsIcon
+                                                    icon={subGoal.is_completed ? CheckmarkSquare01Icon : SquareIcon}
+                                                    strokeWidth={2}
+                                                    className={`size-4 sm:size-5 ${subGoal.is_completed ? 'text-primary' : 'text-muted-foreground'}`}
+                                                />
+                                            </button>
 
-                    {/* Add Sub-goal Input (Owner only, during edit windows) */}
-                    {isOwner && canEdit && canAddSubGoal && (
-                        <form
-                            onSubmit={handleAddSubGoal}
-                            className="flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 border-t border-border/30"
-                        >
-                            <input
-                                type="text"
-                                value={newSubGoalTitle}
-                                onChange={e => setNewSubGoalTitle(e.target.value)}
-                                placeholder="Add a sub-goal..."
-                                maxLength={100}
-                                className="flex-1 bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-                            />
-                            <Button
-                                type="submit"
-                                variant="ghost"
-                                size="icon-sm"
-                                disabled={!newSubGoalTitle.trim() || addingSubGoal}
-                            >
-                                <HugeiconsIcon icon={Add01Icon} strokeWidth={2} className="size-3.5 sm:size-4" />
-                            </Button>
-                        </form>
-                    )}
-                </div>
-            )}
-        </div>
+                                            {/* Sub-goal title */}
+                                            <span className={`flex-1 text-xs sm:text-sm ${subGoal.is_completed ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                                                {subGoal.title}
+                                            </span>
+
+                                            {/* Delete sub-goal (Owner only, during edit windows) */}
+                                            {isOwner && canEdit && (
+                                                <button
+                                                    onClick={() => handleDeleteSubGoal(subGoal.id)}
+                                                    className="shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all"
+                                                >
+                                                    <HugeiconsIcon icon={Delete02Icon} strokeWidth={2} className="size-3.5 sm:size-4" />
+                                                </button>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-muted-foreground">
+                                    No sub-goals yet.
+                                </p>
+                            )}
+
+                            {/* Add Sub-goal Input (Owner only, during edit windows) */}
+                            {isOwner && canEdit && canAddSubGoal && (
+                                <form
+                                    onSubmit={handleAddSubGoal}
+                                    className="flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 border-t border-border/30"
+                                >
+                                    <input
+                                        type="text"
+                                        value={newSubGoalTitle}
+                                        onChange={e => setNewSubGoalTitle(e.target.value)}
+                                        placeholder="Add a sub-goal..."
+                                        maxLength={100}
+                                        className="flex-1 bg-transparent text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                                    />
+                                    <Button
+                                        type="submit"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        disabled={!newSubGoalTitle.trim() || addingSubGoal}
+                                    >
+                                        <HugeiconsIcon icon={Add01Icon} strokeWidth={2} className="size-3.5 sm:size-4" />
+                                    </Button>
+                                </form>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
     )
 }
