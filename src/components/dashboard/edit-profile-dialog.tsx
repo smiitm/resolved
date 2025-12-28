@@ -36,12 +36,14 @@ import {
     Edit02Icon,
 } from '@hugeicons/core-free-icons'
 import type { Profile } from './profile-header'
+import { toast } from 'sonner'
 
 interface EditProfileDialogProps {
     profile: Profile
+    customTrigger?: React.ReactElement
 }
 
-export function EditProfileDialog({ profile }: EditProfileDialogProps) {
+export function EditProfileDialog({ profile, customTrigger }: EditProfileDialogProps) {
     const supabase = createClient()
     const router = useRouter()
 
@@ -87,7 +89,7 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
                 .single()
 
             if (existing && existing.id !== user.id) {
-                alert('This username is already taken.')
+                toast.error('This username is already taken.')
                 setSaving(false)
                 return
             }
@@ -112,7 +114,7 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
 
         } catch (error) {
             console.error(error)
-            alert('Error updating profile. Please try again.')
+            toast.error('Error updating profile. Please try again.')
         } finally {
             setSaving(false)
         }
@@ -122,10 +124,12 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger
                 render={
-                    <Button variant="outline" size="sm">
-                        <HugeiconsIcon icon={Edit02Icon} strokeWidth={2} data-icon="inline-start" />
-                        Edit Profile
-                    </Button>
+                    customTrigger || (
+                        <Button variant="outline" size="sm">
+                            <HugeiconsIcon icon={Edit02Icon} strokeWidth={2} data-icon="inline-start" />
+                            Edit Profile
+                        </Button>
+                    )
                 }
             />
 

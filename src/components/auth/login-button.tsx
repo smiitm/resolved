@@ -2,7 +2,37 @@
 
 import { createClient } from "@/utils/supabase/client"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useState } from "react"
+
+async function performAuthAction(
+    supabase: ReturnType<typeof createClient>,
+    router: ReturnType<typeof useRouter>
+) {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (user) {
+        // User is logged in, get their username and redirect
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', user.id)
+            .single()
+
+        if (profile?.username) {
+            router.push(`/${profile.username}`)
+        } else {
+            router.push('/onboarding')
+        }
+    } else {
+        // User not logged in, initiate Google OAuth
+        await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+            },
+        })
+    }
+}
 
 export function LoginButton() {
     const router = useRouter()
@@ -11,31 +41,7 @@ export function LoginButton() {
     const handleClick = async () => {
         setIsLoading(true)
         const supabase = createClient()
-
-        const { data: { user } } = await supabase.auth.getUser()
-
-        if (user) {
-            // User is logged in, get their username and redirect
-            const { data: profile } = await supabase
-                .from('users')
-                .select('username')
-                .eq('id', user.id)
-                .single()
-
-            if (profile?.username) {
-                router.push(`/${profile.username}`)
-            } else {
-                router.push('/onboarding')
-            }
-        } else {
-            // User not logged in, initiate Google OAuth
-            await supabase.auth.signInWithOAuth({
-                provider: "google",
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                },
-            })
-        }
+        await performAuthAction(supabase, router)
         setIsLoading(false)
     }
 
@@ -55,31 +61,7 @@ export function useAuthAction() {
 
     const handleAuthAction = async () => {
         const supabase = createClient()
-
-        const { data: { user } } = await supabase.auth.getUser()
-
-        if (user) {
-            // User is logged in, get their username and redirect
-            const { data: profile } = await supabase
-                .from('users')
-                .select('username')
-                .eq('id', user.id)
-                .single()
-
-            if (profile?.username) {
-                router.push(`/${profile.username}`)
-            } else {
-                router.push('/onboarding')
-            }
-        } else {
-            // User not logged in, initiate Google OAuth
-            await supabase.auth.signInWithOAuth({
-                provider: "google",
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                },
-            })
-        }
+        await performAuthAction(supabase, router)
     }
 
     return handleAuthAction

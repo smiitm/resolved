@@ -26,6 +26,7 @@ import {
     CheckmarkCircle02Icon,
 } from '@hugeicons/core-free-icons'
 import type { Goal } from './goals-section'
+import { toast } from 'sonner'
 
 interface AddGoalDialogProps {
     userId: string
@@ -70,7 +71,7 @@ export function AddGoalDialog({ userId, onGoalAdded }: AddGoalDialogProps) {
             setOpen(false)
         } catch (error) {
             console.error('Error adding goal:', error)
-            alert('Failed to add goal')
+            toast.error('Failed to add goal')
         } finally {
             setSaving(false)
         }

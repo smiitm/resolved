@@ -13,6 +13,7 @@ import {
     Add01Icon,
 } from '@hugeicons/core-free-icons'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import type { Goal, SubGoal } from './goals-section'
 
 interface GoalCardProps {
@@ -90,7 +91,7 @@ export function GoalCard({
             onGoalDeleted(goal.id)
         } catch (error) {
             console.error('Error deleting goal:', error)
-            alert('Failed to delete goal')
+            toast.error('Failed to delete goal')
         } finally {
             setDeleting(false)
         }
@@ -116,7 +117,7 @@ export function GoalCard({
             setNewSubGoalTitle('')
         } catch (error) {
             console.error('Error adding sub-goal:', error)
-            alert('Failed to add sub-goal')
+            toast.error('Failed to add sub-goal')
         } finally {
             setAddingSubGoal(false)
         }
@@ -152,7 +153,7 @@ export function GoalCard({
             onSubGoalDeleted(goal.id, subGoalId)
         } catch (error) {
             console.error('Error deleting sub-goal:', error)
-            alert('Failed to delete sub-goal')
+            toast.error('Failed to delete sub-goal')
         }
     }
 

@@ -8,7 +8,7 @@ import {
     Link01Icon,
     Target01Icon,
 } from "@hugeicons/core-free-icons"
-import { EditProfileDialog } from "./edit-profile-dialog"
+import { ProfileMenuDrawer } from "./profile-menu-drawer"
 import { FollowButton } from "./follow-button"
 
 interface Profile {
@@ -60,7 +60,7 @@ export function ProfileHeader({ profile, isOwner = true, isFollowing = false, is
                     {/* Mobile: Only show button here */}
                     <div className="sm:hidden flex justify-end">
                         {isOwner ? (
-                            <EditProfileDialog profile={profile} />
+                            <ProfileMenuDrawer userId={profile.id} profile={profile} />
                         ) : (
                             <FollowButton
                                 targetUserId={profile.id}
@@ -78,7 +78,7 @@ export function ProfileHeader({ profile, isOwner = true, isFollowing = false, is
                             </h1>
                             <div className="shrink-0">
                                 {isOwner ? (
-                                    <EditProfileDialog profile={profile} />
+                                    <ProfileMenuDrawer userId={profile.id} profile={profile} />
                                 ) : (
                                     <FollowButton
                                         targetUserId={profile.id}

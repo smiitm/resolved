@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server"
 import { notFound } from "next/navigation"
 import { ProfileHeader, type Profile } from "@/components/dashboard/profile-header"
 import { GoalsSection, type Goal } from "@/components/dashboard/goals-section"
+import { ProfileSidebar } from "@/components/dashboard/profile-sidebar"
 
 interface PageProps {
     params: Promise<{ username: string }>
@@ -43,6 +44,18 @@ export default async function UserProfilePage({ params }: PageProps) {
         isFollowing = !!followRecord
     }
 
+    // Fetch current user's username for the sidebar
+    let currentUserUsername: string | null = null
+    if (user && !isOwner) {
+        const { data: currentUserProfile } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', user.id)
+            .single()
+
+        currentUserUsername = currentUserProfile?.username || null
+    }
+
     // Fetch goals with sub_goals for this profile
     // For non-owners, only fetch public goals
     const goalsQuery = supabase
@@ -74,6 +87,14 @@ export default async function UserProfilePage({ params }: PageProps) {
                     isOwner={isOwner}
                 />
             </div>
+
+            {/* Desktop sidebar */}
+            <ProfileSidebar
+                profile={profile}
+                isLoggedIn={isLoggedIn}
+                isOwner={isOwner}
+                currentUserUsername={currentUserUsername}
+            />
         </div>
     )
 }

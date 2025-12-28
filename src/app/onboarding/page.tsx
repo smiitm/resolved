@@ -31,10 +31,10 @@ import {
     Link01Icon,
     ArrowRight01Icon,
     Loading03Icon,
-    TextIcon,
 } from '@hugeicons/core-free-icons'
 import { Textarea } from '@/components/ui/textarea'
 import { isReservedUsername } from '@/lib/constants'
+import { toast } from 'sonner'
 
 export default function OnboardingPage() {
     const supabase = createClient()
@@ -94,7 +94,7 @@ export default function OnboardingPage() {
 
             // Check if username is reserved
             if (isReservedUsername(formData.username)) {
-                alert('This username is reserved. Please choose a different one.')
+                toast.error('This username is reserved. Please choose a different one.')
                 setLoading(false)
                 return
             }
@@ -106,7 +106,7 @@ export default function OnboardingPage() {
                 .single()
 
             if (existing) {
-                alert('This username is already taken.')
+                toast.error('This username is already taken.')
                 setLoading(false)
                 return
             }
@@ -129,7 +129,7 @@ export default function OnboardingPage() {
 
         } catch (error) {
             console.error(error)
-            alert('Error creating profile. Please try again.')
+            toast.error('Error creating profile. Please try again.')
         } finally {
             setLoading(false)
         }
